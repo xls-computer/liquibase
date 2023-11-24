@@ -46,6 +46,7 @@ public class UpdateVisitor implements ChangeSetVisitor {
         ExecType execType = null;
         ObjectQuotingStrategy previousStr = this.database.getObjectQuotingStrategy();
         try {
+            //真正的执行配置中的changeset
             execType = changeSet.execute(databaseChangeLog, execListener, this.database);
         } catch (MigrationFailedException e) {
             fireRunFailed(changeSet, databaseChangeLog, database, e);

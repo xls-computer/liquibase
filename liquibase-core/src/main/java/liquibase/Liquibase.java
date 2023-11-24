@@ -373,7 +373,9 @@ public class Liquibase implements AutoCloseable {
 
     public DatabaseChangeLog getDatabaseChangeLog() throws LiquibaseException {
         if (databaseChangeLog == null && changeLogFile != null) {
+            //获取能够处理changeLogFile的解析器（SQL、XML、YAML等解析器）
             ChangeLogParser parser = ChangeLogParserFactory.getInstance().getParser(changeLogFile, resourceAccessor);
+            //解析对应的文件
             databaseChangeLog = parser.parse(changeLogFile, changeLogParameters, resourceAccessor);
         }
 
@@ -599,6 +601,7 @@ public class Liquibase implements AutoCloseable {
             @Override
             public void run() throws Exception {
                 LockService lockService = LockServiceFactory.getInstance().getLockService(database);
+                //对databasechangeloglock表加锁，防止多个项目启动时带来的安全问题
                 lockService.waitForLock();
 
                 HubUpdater hubUpdater = null;
@@ -606,13 +609,15 @@ public class Liquibase implements AutoCloseable {
                 BufferedLogService bufferLog = new BufferedLogService();
                 DatabaseChangeLog changeLog = null;
                 try {
-
+                    //加载master.xml配置文件中配置的sql脚本
                     changeLog = getDatabaseChangeLog();
 
+                    //检查databasechangelog表、dtabasechangeloglock表，没有则创建，并计算配置中changeset的checksum值
                     checkLiquibaseTables(true, changeLog, contexts, labelExpression);
 
                     ChangeLogHistoryServiceFactory.getInstance().getChangeLogService(database).generateDeploymentId();
 
+                    //
                     changeLog.validate(database, contexts, labelExpression);
 
                     //
@@ -664,6 +669,7 @@ public class Liquibase implements AutoCloseable {
 
                     CompositeLogService compositeLogService = new CompositeLogService(true, bufferLog);
                     Scope.child(Scope.Attr.logService.name(), compositeLogService, () -> {
+                        //UpdateVisitor类的run
                         runChangeLogIterator.run(createUpdateVisitor(), new RuntimeEnvironment(database, contexts, labelExpression));
                     });
                     hubUpdater.postUpdateHub(updateOperation, bufferLog);
@@ -1875,10 +1881,13 @@ public class Liquibase implements AutoCloseable {
                                      Contexts contexts, LabelExpression labelExpression) throws LiquibaseException {
         ChangeLogHistoryService changeLogHistoryService =
                 ChangeLogHistoryServiceFactory.getInstance().getChangeLogService(getDatabase());
+        //检查是否创建了databasechangelog表，没有则创建该表
         changeLogHistoryService.init();
         if (updateExistingNullChecksums) {
+            //为配置中需要执行的changeset计算checksum值
             changeLogHistoryService.upgradeChecksums(databaseChangeLog, contexts, labelExpression);
         }
+        //检查是否创建了databasechangeloglock表，没有则创建该表
         LockServiceFactory.getInstance().getLockService(getDatabase()).init();
     }
 

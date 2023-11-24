@@ -270,8 +270,10 @@ public class SpringLiquibase implements InitializingBean, BeanNameAware, Resourc
 		Liquibase liquibase = null;
         try {
             c = getDataSource().getConnection();
+            //根据配置的数据源，创建对象
             liquibase = createLiquibase(c);
             generateRollbackFile(liquibase);
+            //会执行到Liquibase#update()方法，核心
             performUpdate(liquibase);
         } catch (SQLException e) {
         	throw new DatabaseException(e);

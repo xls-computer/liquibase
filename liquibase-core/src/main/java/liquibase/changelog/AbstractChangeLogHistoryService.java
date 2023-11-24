@@ -60,17 +60,22 @@ public abstract class AbstractChangeLogHistoryService implements ChangeLogHistor
         }
     }
 
+    //databaseChangeLog为从配置中读取的changeLog
     public void upgradeChecksums(final DatabaseChangeLog databaseChangeLog, final Contexts contexts,
                                  LabelExpression labels) throws DatabaseException {
+        //this.getRanChangeSets()为从数据库表中读取的记录列表
         for (RanChangeSet ranChangeSet : this.getRanChangeSets()) {
             if (ranChangeSet.getLastCheckSum() == null) {
+                //获取数据库中记录在配置文件中对应的changeset
                 ChangeSet changeSet = databaseChangeLog.getChangeSet(ranChangeSet);
+                //配置文件中有，数据库中没有，且需要执行
                 if ((changeSet != null) && new ContextChangeSetFilter(contexts).accepts(changeSet).isAccepted() &&
                     new DbmsChangeSetFilter(getDatabase()).accepts(changeSet).isAccepted()
                     ) {
                     Scope.getCurrentScope().getLog(getClass()).fine(
                             "Updating null or out of date checksum on changeSet " + changeSet + " to correct value"
                     );
+                    //为配置文件中的changeset计算checksum，并不是修改数据库中的该记录
                     replaceChecksum(changeSet);
                 }
             }

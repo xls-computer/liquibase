@@ -83,9 +83,12 @@ public class ValidatingVisitor implements ChangeSetVisitor {
         
     @Override
     public void visit(ChangeSet changeSet, DatabaseChangeLog databaseChangeLog, Database database, Set<ChangeSetFilterResult> filterResults) throws LiquibaseException {
+        //changeSet为配置中的changeset
+        //ranChangeSet为根据changeSet到数据里中查到的
         RanChangeSet ranChangeSet = findChangeSet(changeSet);
         boolean ran = ranChangeSet != null;
         changeSet.setStoredCheckSum(ran?ranChangeSet.getLastCheckSum():null);
+        //shouldValidate为true表示需要执行
         boolean shouldValidate = !ran || changeSet.shouldRunOnChange() || changeSet.shouldAlwaysRun();
         for (Change change : changeSet.getChanges()) {
             try {
@@ -94,7 +97,7 @@ public class ValidatingVisitor implements ChangeSetVisitor {
                 setupExceptions.add(se);
             }
             
-            
+            //需要执行的changeset
             if(shouldValidate){
                 warnings.addAll(change.warn(database));
 
@@ -122,8 +125,10 @@ public class ValidatingVisitor implements ChangeSetVisitor {
         }
 
         if(ranChangeSet != null){
+            //MD5SUM不一致
             if (!changeSet.isCheckSumValid(ranChangeSet.getLastCheckSum())) {
                 if (!changeSet.shouldRunOnChange()) {
+                    //invalidMD5Sums不为empty，后边会抛出异常【执行了changeset，且对其进行了修改】
                     invalidMD5Sums.add(changeSet.toString(false)+" was: "+ranChangeSet.getLastCheckSum().toString()+" but is now: "+changeSet.generateCheckSum().toString());
                 }
             }

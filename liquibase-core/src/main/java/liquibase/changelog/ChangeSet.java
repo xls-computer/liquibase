@@ -1005,6 +1005,7 @@ public class ChangeSet implements Conditional, ChangeLogChild {
         if (currentMd5Sum == null) {
             return true;
         }
+        //数据库中的MD5SUM不存在，则验证成功
         if (storedCheckSum == null) {
             return true;
         }

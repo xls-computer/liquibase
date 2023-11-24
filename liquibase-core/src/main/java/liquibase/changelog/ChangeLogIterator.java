@@ -79,6 +79,7 @@ public class ChangeLogIterator {
                             for (ChangeSetFilter filter : changeSetFilters) {
                                 ChangeSetFilterResult acceptsResult = filter.accepts(changeSet);
                                 if (acceptsResult.isAccepted()) {
+                                    //需要被执行
                                     reasonsAccepted.add(acceptsResult);
                                 } else {
                                     shouldVisit = false;
@@ -92,6 +93,7 @@ public class ChangeLogIterator {
                         BufferedLogService bufferLog = new BufferedLogService();
                         CompositeLogService compositeLogService = new CompositeLogService(true, bufferLog);
                         Scope.child(Scope.Attr.changeSet.name(), changeSet, () -> {
+                            //需要被执行，且没有重复执行过
                             if (finalShouldVisit && !alreadySaw(changeSet)) {
                                 //
                                 // Go validate any change sets with an Executor
@@ -108,6 +110,9 @@ public class ChangeLogIterator {
                                 values.put(Scope.Attr.logService.name(), compositeLogService);
                                 values.put(BufferedLogService.class.getName(), bufferLog);
                                 Scope.child(values, () -> {
+                                    //ChangeSetVisitor有不同的实现
+                                    //ValidatingVisitor类，会计算是否存在不能对应的MD5SUM
+                                    //UpdateVisitor类，会真正执行changeset
                                     visitor.visit(changeSet, databaseChangeLog, env.getTargetDatabase(), reasonsAccepted);
                                 });
                                 markSeen(changeSet);

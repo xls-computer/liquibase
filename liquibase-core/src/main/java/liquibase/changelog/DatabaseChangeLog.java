@@ -288,13 +288,16 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
         );
 
         ValidatingVisitor validatingVisitor = new ValidatingVisitor(database.getRanChangeSetList());
+        //<preconditions>检查
         validatingVisitor.validate(database, this);
+        //ValidatingVisitor类的run
         logIterator.run(validatingVisitor, new RuntimeEnvironment(database, contexts, labelExpression));
 
         for (String message : validatingVisitor.getWarnings().getMessages()) {
             Scope.getCurrentScope().getLog(getClass()).warning(message);
         }
 
+        //存在MD5不一致等问题，抛出异常
         if (!validatingVisitor.validationPassed()) {
             throw new ValidationFailedException(validatingVisitor);
         }

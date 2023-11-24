@@ -117,6 +117,7 @@ public class StandardChangeLogHistoryService extends AbstractChangeLogHistorySer
         boolean changeLogCreateAttempted = false;
         Executor executor = Scope.getCurrentScope().getSingleton(ExecutorService.class).getExecutor("jdbc", database);
         if (changeLogTable != null) {
+            //存在databasechangelog表，检查表的各个字段是否符合预期
             boolean hasDescription = changeLogTable.getColumn("DESCRIPTION") != null;
             boolean hasComments = changeLogTable.getColumn("COMMENTS") != null;
             boolean hasTag = changeLogTable.getColumn("TAG") != null;
@@ -260,6 +261,7 @@ public class StandardChangeLogHistoryService extends AbstractChangeLogHistorySer
 
 
         } else if (!changeLogCreateAttempted) {
+            //不存在databasechangelog表，则创建该表
             executor.comment("Create Database Change Log Table");
             SqlStatement createTableStatement = new CreateDatabaseChangeLogTableStatement();
             if (!canCreateChangeLogTable()) {
